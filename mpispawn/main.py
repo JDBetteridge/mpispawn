@@ -1,12 +1,10 @@
 import os
 import shlex
 import sys
-
 from argparse import ArgumentParser, ArgumentTypeError
 from itertools import groupby
 
 from mpi4py import MPI
-
 
 # Parser for handling `--help` and `--check-spawn` only
 short_circuit_parser = ArgumentParser(
@@ -50,7 +48,8 @@ parser.add_argument(
 # Parser for `mpispawn` and the first provided command
 primary_parser = ArgumentParser(
     prog='mpispawn',
-    description='A command line tool to drive the MPI dynamic process management',
+    description='\
+        A command line tool to drive the MPI dynamic process management',
     epilog='subsequent commands:',
     allow_abbrev=False,
     add_help=False,
@@ -93,7 +92,9 @@ primary_parser.add_argument(
 primary_parser.add_argument(
     '--print-commands',
     action='store_true',
-    help='Print the spawn commands formatted as a sequence of mpiexec commands without executing them',
+    help='\
+        Print the spawn commands formatted as a sequence of mpiexec commands '
+    'without executing them',
 )
 
 
@@ -131,7 +132,8 @@ def parse_all_args(args=sys.argv):
             Nworld = tuple(int(ii) for ii in first_args.nW.split(','))
         except ValueError:
             raise ArgumentTypeError(
-                f"argument -nW: invalid value '{first_args.nW}' is not an int or tuple of ints"
+                f"argument -nW: invalid value '{first_args.nW}' is not an int "
+                'or tuple of ints'
             )
 
     # Establish the size of `MPI_UNIVERSE`
@@ -149,7 +151,8 @@ def parse_all_args(args=sys.argv):
     if isinstance(Nworld, tuple):
         if any(a[0].nW for a in subsequent_args):
             raise ArgumentTypeError(
-                "argument -nW: shouldn't be specified as a tuple and for each command"
+                "argument -nW: shouldn't be specified as a tuple and for each "
+                'command'
             )
         first_args.nW = Nworld
     else:
@@ -163,10 +166,12 @@ def parse_all_args(args=sys.argv):
             k = Nuniverse // Nworld
             first_args.nW = [Nworld] * k
 
-    # Check that the sum of the `COMM_WORLD.size`s is less than or equal to the MPI_UNIVERSE size
+    # Check that the sum of the `COMM_WORLD.size`s is less than or equal to the
+    # MPI_UNIVERSE size
     if sum(first_args.nW) > first_args.nU:
         raise ArgumentTypeError(
-            f'argument -nW: sum of `COMM_WORLD.size`s is {sum(first_args.nW)}, which is greater than MPI_UNIVERSE size {first_args.nU}'
+            f'argument -nW: sum of `COMM_WORLD.size`s is {sum(first_args.nW)}, '
+            'which is greater than MPI_UNIVERSE size {first_args.nU}'
         )
 
     # Create a list of commands the same length as the number of tasks
@@ -179,7 +184,8 @@ def parse_all_args(args=sys.argv):
         commands *= Ntasks
     elif len(commands) != Ntasks:
         raise ArgumentTypeError(
-            f'number of `COMM_WORLD.size`s: {Ntasks} is not equal to the number of commands: {len(commands)}'
+            f'number of `COMM_WORLD.size`s: {Ntasks} is not equal to the '
+            f'number of commands: {len(commands)}'
         )
     first_args.command = commands
 
