@@ -1,0 +1,28 @@
+[project]
+name = "mpispawn"
+version = "0.1"
+description = "A tool for spawning multiple simultaneous MPI tasks"
+readme = "readme.md"
+authors = [
+  {name = "Jack Betteridge", email = "J.Betteridge@imperial.ac.uk"},
+]
+maintainers = [
+  {name = "Jack Betteridge", email = "J.Betteridge@imperial.ac.uk"},
+]
+dependencies = [
+  "mpi4py",
+]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Programming Language :: Python"
+]
+
+[project.scripts]
+mpispawn = "mpispawn:main.main"
+
+[project.urls]
+Repository = "https://github.com/JDBetteridge/mpispawn"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

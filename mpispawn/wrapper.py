@@ -5,11 +5,11 @@ from mpi4py import MPI
 
 
 def wrapper():
+    '''Thin wrapper to instantiate MPI and handle return codes
+    '''
     comm = MPI.Comm.Get_parent()
 
-    print(f"Child process on {MPI.COMM_WORLD.size}")
     out = subprocess.run(sys.argv[1:])
-    print(out.returncode)
 
     if comm != MPI.COMM_NULL:
         comm.gather(out.returncode, root=0)
