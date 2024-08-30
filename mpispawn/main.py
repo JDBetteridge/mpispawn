@@ -16,14 +16,12 @@ short_circuit_parser = ArgumentParser(
     add_help=False,
 )
 short_circuit_parser.add_argument(
-    '--help',
-    action='store_true',
-    help='Show this help message and exit'
+    '--help', action='store_true', help='Show this help message and exit'
 )
 short_circuit_parser.add_argument(
     '--check-spawn',
     action='store_true',
-    help='Verify whether it is possible to call MPI_comm_spawn'
+    help='Verify whether it is possible to call MPI_comm_spawn',
 )
 
 # Parser for commands that are separated by `:` after `mpispawn`
@@ -32,21 +30,21 @@ parser = ArgumentParser(
     usage='',
     allow_abbrev=False,
     add_help=False,
-    epilog='Enjoy!'
+    epilog='Enjoy!',
 )
 parser.add_argument(
     '-nW',
     metavar='COMM_WORLD.size',
     required=False,
     type=int,
-    help='Size of COMM_WORLD'
+    help='Size of COMM_WORLD',
 )
 parser.add_argument(
     'command',
     metavar='command :',
     type=str,
     nargs='+',
-    help='Command(s) to execute'
+    help='Command(s) to execute',
 )
 
 # Parser for `mpispawn` and the first provided command
@@ -56,56 +54,51 @@ primary_parser = ArgumentParser(
     epilog='subsequent commands:',
     allow_abbrev=False,
     add_help=False,
-    conflict_handler='resolve'
+    conflict_handler='resolve',
 )
 primary_parser.add_argument(
-    '--help',
-    action='store_true',
-    help='Show this help message and exit'
+    '--help', action='store_true', help='Show this help message and exit'
 )
 primary_parser.add_argument(
-    '-nU',
-    metavar='COMM_UNIVERSE.size',
-    type=int,
-    help='Size of COMM_UNIVERSE'
+    '-nU', metavar='COMM_UNIVERSE.size', type=int, help='Size of COMM_UNIVERSE'
 )
 primary_parser.add_argument(
     '-nW',
     metavar='COMM_WORLD.size',
     required=True,
-    help='Size(s) of COMM_WORLD(s)'
+    help='Size(s) of COMM_WORLD(s)',
 )
 primary_parser.add_argument(
     'command',
     metavar='command :',
     type=str,
     nargs='+',
-    help='Command(s) to execute'
+    help='Command(s) to execute',
 )
 primary_parser.add_argument(
     '--wrapper',
     action='store_true',
-    help='Use a wrapper script around commands'
+    help='Use a wrapper script around commands',
 )
 primary_parser.add_argument(
     '--propagate-errcodes',
     action='store_true',
-    help='Return with the highest error code from spawned process'
+    help='Return with the highest error code from spawned process',
 )
 primary_parser.add_argument(
     '--check-spawn',
     action='store_true',
-    help='Verify whether it is possible to call MPI_comm_spawn'
+    help='Verify whether it is possible to call MPI_comm_spawn',
 )
 primary_parser.add_argument(
     '--print-commands',
     action='store_true',
-    help='Print the spawn commands formatted as a sequence of mpiexec commands without executing them'
+    help='Print the spawn commands formatted as a sequence of mpiexec commands without executing them',
 )
 
 
 def split_list(args, split=':'):
-    '''Split a list into a list of sublists based on the `split` token.
+    """Split a list into a list of sublists based on the `split` token.
 
     For example:
     ```
@@ -113,13 +106,16 @@ def split_list(args, split=':'):
     ```
     Used here to separate multiple commands passed to `mpispawn` by splitting
     `sys.argv` on ':'
-    '''
-    return [list(x) for condition, x in groupby(args, lambda part: part != split) if condition]
+    """
+    return [
+        list(x)
+        for condition, x in groupby(args, lambda part: part != split)
+        if condition
+    ]
 
 
 def parse_all_args(args=sys.argv):
-    '''Parse all of the commands and arguments passed to `mpispawn`.
-    '''
+    """Parse all of the commands and arguments passed to `mpispawn`."""
     # Split all of the command line arguments by the `:` token
     parts = split_list(sys.argv)
     # Parse the arguments for `mpispawn` first (there are more of them)
@@ -135,7 +131,7 @@ def parse_all_args(args=sys.argv):
             Nworld = tuple(int(ii) for ii in first_args.nW.split(','))
         except ValueError:
             raise ArgumentTypeError(
-                f'argument -nW: invalid value \'{first_args.nW}\' is not an int or tuple of ints'
+                f"argument -nW: invalid value '{first_args.nW}' is not an int or tuple of ints"
             )
 
     # Establish the size of `MPI_UNIVERSE`
@@ -153,19 +149,19 @@ def parse_all_args(args=sys.argv):
     if isinstance(Nworld, tuple):
         if any(a[0].nW for a in subsequent_args):
             raise ArgumentTypeError(
-                    'argument -nW: shouldn\'t be specified as a tuple and for each command'
-                )
+                "argument -nW: shouldn't be specified as a tuple and for each command"
+            )
         first_args.nW = Nworld
     else:
         if subsequent_args and all(a[0].nW for a in subsequent_args):
             first_args.nW = [Nworld] + [a[0].nW for a in subsequent_args]
         elif subsequent_args and any(a[0].nW for a in subsequent_args):
             raise ArgumentTypeError(
-                    'argument -nW: specified for some commands but not all'
-                )
+                'argument -nW: specified for some commands but not all'
+            )
         else:
-            k = Nuniverse//Nworld
-            first_args.nW = [Nworld]*k
+            k = Nuniverse // Nworld
+            first_args.nW = [Nworld] * k
 
     # Check that the sum of the `COMM_WORLD.size`s is less than or equal to the MPI_UNIVERSE size
     if sum(first_args.nW) > first_args.nU:
@@ -175,7 +171,9 @@ def parse_all_args(args=sys.argv):
 
     # Create a list of commands the same length as the number of tasks
     Ntasks = len(first_args.nW)
-    commands = [first_args.command + unk] + [a[0].command + a[1] for a in subsequent_args]
+    commands = [first_args.command + unk] + [
+        a[0].command + a[1] for a in subsequent_args
+    ]
     if Ntasks > 1 and len(commands) == 1:
         # If there's only one command we repeat it to create multiple tasks
         commands *= Ntasks
@@ -189,15 +187,13 @@ def parse_all_args(args=sys.argv):
 
 
 def print_commands(tasks):
-    '''Print out the list of tasks as mpiexec commands.
-    '''
+    """Print out the list of tasks as mpiexec commands."""
     for n, command in tasks:
         print(f'mpiexec -n {n} {shlex.join(command)}')
 
 
 def spawn(tasks, wrapper=False, errcodes=False):
-    '''Spawn the list of tasks.
-    '''
+    """Spawn the list of tasks."""
     # Collect the communicators
     comms = []
 
@@ -209,7 +205,7 @@ def spawn(tasks, wrapper=False, errcodes=False):
         else:
             cmd = command[0]
             args = command[1:]
-        error_code = [-1]*n
+        error_code = [-1] * n
         comms.append(MPI.COMM_WORLD.Spawn(cmd, args, n, errcodes=error_code))
         if any(error_code):
             raise RuntimeError(f'Failed to execute {shlex.join(cmd + args)}')
@@ -236,14 +232,13 @@ def main():
     elif args.check_spawn:
         # Run a simple command in the wrapper and return
         retcode = spawn(
-            [(1, ["echo", "Spawn successful"])],
-            wrapper=True,
-            errcodes=True
+            [(1, ['echo', 'Spawn successful'])], wrapper=True, errcodes=True
         )
     else:
         # Parse all of the command line arguments
         args = parse_all_args()
         from pprint import pprint
+
         pprint(vars(args))
 
         # Construct a list of tasks and associated `COMM_WORLD.size`s
@@ -255,7 +250,9 @@ def main():
             retcode = os.EX_OK
         else:
             # Spawn the collected tasks
-            retcode = spawn(tasks, wrapper=args.wrapper, errcodes=args.propagate_errcodes)
+            retcode = spawn(
+                tasks, wrapper=args.wrapper, errcodes=args.propagate_errcodes
+            )
             retcode = retcode if args.propagate_errcodes else os.EX_OK
 
     return retcode

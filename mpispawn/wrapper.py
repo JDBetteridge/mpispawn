@@ -5,8 +5,7 @@ from mpi4py import MPI
 
 
 def wrapper():
-    '''Thin wrapper to instantiate MPI and handle return codes
-    '''
+    """Thin wrapper to instantiate MPI and handle return codes"""
     comm = MPI.Comm.Get_parent()
 
     out = subprocess.run(sys.argv[1:])
