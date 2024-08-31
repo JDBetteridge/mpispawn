@@ -3,6 +3,7 @@ import shlex
 import sys
 from argparse import ArgumentParser, ArgumentTypeError
 from itertools import groupby
+from string import Template
 
 from mpi4py import MPI
 
@@ -171,7 +172,7 @@ def parse_all_args(args=sys.argv):
     if sum(first_args.nW) > first_args.nU:
         raise ArgumentTypeError(
             f'argument -nW: sum of `COMM_WORLD.size`s is {sum(first_args.nW)}, '
-            'which is greater than MPI_UNIVERSE size {first_args.nU}'
+            f'which is greater than MPI_UNIVERSE size {first_args.nU}'
         )
 
     # Create a list of commands the same length as the number of tasks
@@ -187,7 +188,22 @@ def parse_all_args(args=sys.argv):
             f'number of `COMM_WORLD.size`s: {Ntasks} is not equal to the '
             f'number of commands: {len(commands)}'
         )
-    first_args.command = commands
+
+    # Substitute special environment variables
+    new_commands = []
+    for ii, cmd in enumerate(commands):
+        substitution = {
+            'MPISPAWN_UNIVERSE_SIZE': str(first_args.nU),
+            'MPISPAWN_WORLD_SIZE': str(first_args.nW[ii]),
+            'MPISPAWN_NUM_TASKS': str(Ntasks),
+            'MPISPAWN_TASK_ID0': str(ii),
+            'MPISPAWN_TASK_ID1': str(ii + 1),
+        }
+        new_commands.append(
+            [*map(lambda x: Template(x).safe_substitute(substitution), cmd)]
+        )
+
+    first_args.command = new_commands
 
     return first_args
 
@@ -243,9 +259,6 @@ def main():
     else:
         # Parse all of the command line arguments
         args = parse_all_args()
-        from pprint import pprint
-
-        pprint(vars(args))
 
         # Construct a list of tasks and associated `COMM_WORLD.size`s
         tasks = [*zip(args.nW, args.command)]

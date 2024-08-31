@@ -25,7 +25,9 @@ This works but behaviour here might not be what you expect.
 `mpispawn` will spawn 2 instances of `script_a.py` over 2 COMM_WORLDs of size 4
 
 ## Special environment variables
-MPISPAWN_UNIVERSE_SIZE
-MPISPAWN_WORLD_SIZE
-MPISPAWN_NUM_JOBS
-MPISPAWN_JOB_ID
+These environment variables are set only inside the spawned task:
+- \$MPISPAWN_UNIVERSE_SIZE
+- \$MPISPAWN_WORLD_SIZE
+- \$MPISPAWN_NUM_TASKS
+- \$MPISPAWN_TASK_ID0
+- \$MPISPAWN_TASK_ID1
