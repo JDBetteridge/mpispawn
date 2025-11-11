@@ -5,6 +5,7 @@ from argparse import ArgumentParser, ArgumentTypeError
 from itertools import groupby
 from string import Template
 
+import numpy as np
 from mpi4py import MPI
 
 # Parser for handling `--help` and `--check-spawn` only
@@ -216,10 +217,10 @@ def print_commands(tasks):
 
 def spawn(tasks, wrapper=False, errcodes=False):
     """Spawn the list of tasks."""
-    # Collect the communicators
+    # Collect the communicators to construct
     comms = []
 
-    # Spawn each task
+    # Spawn each communicator and execute the task
     for ii, (n, command) in enumerate(tasks):
         if wrapper:
             cmd = sys.executable
@@ -236,8 +237,18 @@ def spawn(tasks, wrapper=False, errcodes=False):
     status = os.EX_OK
     if MPI.COMM_WORLD.rank == 0 and (wrapper or errcodes):
         for comm in comms:
-            spawn_status = comm.gather(None, root=MPI.ROOT)
-            status = max([status, *spawn_status])
+            buffer = np.empty((comm.Get_remote_size(),), dtype=np.int8)
+            buffer[:] = -66
+            comm.Gather(None, buffer, root=MPI.ROOT)
+            spawn_status = np.max(buffer)
+            status = max([status, spawn_status])
+    elif MPI.COMM_WORLD.rank != 0 and (wrapper or errcodes):
+        for comm in comms:
+            comm.Gather(None, None, root=MPI.PROC_NULL)
+
+    # Disconnect from each spawned communicator
+    for comm in comms:
+        comm.Disconnect()
 
     return status
 
